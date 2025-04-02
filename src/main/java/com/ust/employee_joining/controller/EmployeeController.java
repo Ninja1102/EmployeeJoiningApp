@@ -56,9 +56,13 @@ public class EmployeeController {
 
     @PostMapping("/{id}/upload/{type}")
     @PreAuthorize("hasRole('EMPLOYEE') or hasRole('HR') or hasRole('ADMIN')")
-    public ResponseEntity<String> uploadDocument(@PathVariable Long id, @PathVariable String type, @RequestParam("file") MultipartFile file) throws IOException {
+    public ResponseEntity<String> uploadDocument(
+            @PathVariable Long id,
+            @PathVariable String type,
+            @RequestParam("file") MultipartFile file) throws IOException {
         return ResponseEntity.ok(employeeService.uploadDocument(id, file, type));
     }
+
 
 }
 
