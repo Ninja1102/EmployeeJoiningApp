@@ -50,16 +50,18 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
-                .csrf(csrf -> csrf.disable())
+                .csrf(csrf -> csrf.disable())  // CSRF disabled for REST APIs
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/employee/register").hasAnyAuthority("ADMIN", "HR")
-                        .requestMatchers("/employees/**").hasAnyRole("EMPLOYEE", "HR", "ADMIN")
+                        .requestMatchers("/employees/**").hasAnyAuthority("EMPLOYEE", "HR", "ADMIN") // Fixed Role Check
+                        .requestMatchers(HttpMethod.POST, "/employees/{id}/upload/{type}").hasAnyAuthority("EMPLOYEE", "HR", "ADMIN") // Ensure Upload Works
                         .requestMatchers("/api/auth/change-password").authenticated()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
+
 }
