@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title>Employee Registration</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+<h2>Register New Employee</h2>
+<form action="/employees" method="post">
+  <label>Name:</label>
+  <input type="text" name="name" required>
+  <br>
+  <label>Email:</label>
+  <input type="email" name="email" required>
+  <br>
+  <label>Role:</label>
+  <select name="role">
+    <option value="EMPLOYEE">Employee</option>
+    <option value="HR">HR</option>
+    <option value="ADMIN">Admin</option>
+  </select>
+  <br>
+  <button type="submit">Register</button>
+</form>
+</body>
+</html>

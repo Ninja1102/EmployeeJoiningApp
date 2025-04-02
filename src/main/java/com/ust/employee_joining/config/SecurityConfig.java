@@ -54,6 +54,7 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/**").permitAll()
+                        .requestMatchers("/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/employee/register").hasAnyAuthority("ADMIN", "HR")
                         .requestMatchers("/employees/**").hasAnyAuthority("EMPLOYEE", "HR", "ADMIN") // Fixed Role Check
                         .requestMatchers(HttpMethod.POST, "/employees/{id}/upload/{type}").hasAnyAuthority("EMPLOYEE", "HR", "ADMIN") // Ensure Upload Works

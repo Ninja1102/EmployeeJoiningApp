@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Employee Dashboard</title>
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+<h2>Welcome, <span th:text="${username}"></span>!</h2>
+
+<a href="/employees/profile">View Profile</a>
+<a href="/employees/upload">Upload Documents</a>
+<a href="/auth/logout">Logout</a>
+
+<h3>All Employees (HR/Admin)</h3>
+<table border="1">
+    <tr>
+        <th>ID</th>
+        <th>Name</th>
+        <th>Email</th>
+        <th>Role</th>
+    </tr>
+    <tr th:each="employee : ${employees}">
+        <td th:text="${employee.id}"></td>
+        <td th:text="${employee.name}"></td>
+        <td th:text="${employee.email}"></td>
+        <td th:text="${employee.role}"></td>
+    </tr>
+</table>
+</body>
+</html>
