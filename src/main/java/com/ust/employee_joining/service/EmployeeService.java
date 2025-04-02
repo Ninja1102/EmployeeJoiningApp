@@ -2,7 +2,9 @@ package com.ust.employee_joining.service;
 
 import com.ust.employee_joining.model.Employee;
 import com.ust.employee_joining.model.Role;
+import com.ust.employee_joining.model.User;
 import com.ust.employee_joining.repository.EmployeeRepository;
+import com.ust.employee_joining.repository.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -16,10 +18,15 @@ import java.util.UUID;
 @Service
 public class EmployeeService {
     private final EmployeeRepository employeeRepository;
+    private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
-    public EmployeeService(EmployeeRepository employeeRepository, PasswordEncoder passwordEncoder, EmailService emailService) {
+    public EmployeeService(EmployeeRepository employeeRepository,
+                           UserRepository userRepository,  // ✅ Injected properly
+                           PasswordEncoder passwordEncoder,
+                           EmailService emailService) {
         this.employeeRepository = employeeRepository;
+        this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.emailService = emailService;
     }
@@ -37,8 +44,19 @@ public class EmployeeService {
         String tempPassword = UUID.randomUUID().toString().substring(0, 8);
         employee.setPassword(passwordEncoder.encode(tempPassword));
 
-        // Save employee in the database
+        // Set default role as EMPLOYEE
+        employee.setRole(Role.EMPLOYEE);
+
+        // Save employee in the employee table
         Employee savedEmployee = employeeRepository.save(employee);
+
+        // Also, save employee in the users table
+        User newUser = new User();
+        newUser.setUsername(companyEmail);  // Use company email as username
+        newUser.setPassword(employee.getPassword()); // Store encoded password
+        newUser.setRole(Role.EMPLOYEE); // Set role as EMPLOYEE
+
+        userRepository.save(newUser); // Save in users table
 
         // Send temporary password via email
         emailService.sendEmail(
@@ -51,6 +69,7 @@ public class EmployeeService {
 
         return savedEmployee;
     }
+
 
     public List<Employee> getAllEmployees() {
         return employeeRepository.findAll();

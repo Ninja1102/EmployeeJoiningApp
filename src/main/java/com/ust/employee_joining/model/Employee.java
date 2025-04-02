@@ -24,7 +24,14 @@ public class Employee {
     @Enumerated(EnumType.STRING)
     private Role role;
 
-    // Getters and Setters
+    public Role getRole() {
+        return role;
+    }
+
+    public void setRole(Role role) {
+        this.role = role;
+    }
+// Getters and Setters
 
 
     public Long getId() {

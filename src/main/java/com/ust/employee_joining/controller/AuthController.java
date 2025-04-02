@@ -1,5 +1,6 @@
 package com.ust.employee_joining.controller;
 
+import com.ust.employee_joining.model.ChangePasswordRequest;
 import com.ust.employee_joining.model.Role;
 import com.ust.employee_joining.service.AuthService;
 import org.springframework.http.ResponseEntity;
@@ -46,5 +47,11 @@ public class AuthController {
     public ResponseEntity<String> deleteAdmin(@PathVariable String username) {
         authService.deleteAdmin(username);
         return ResponseEntity.ok("Admin deleted successfully.");
+    }
+
+    @PutMapping("/change-password")
+    @PreAuthorize("isAuthenticated()")  // Only logged-in users can change their password
+    public ResponseEntity<String> changePassword(@RequestBody ChangePasswordRequest request) {
+        return ResponseEntity.ok(authService.changePassword(request.getOldPassword(), request.getNewPassword()));
     }
 }

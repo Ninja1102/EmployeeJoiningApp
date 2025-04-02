@@ -50,16 +50,14 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
-                .csrf(csrf -> csrf.disable()) // Disable CSRF
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // Stateless API
+                .csrf(csrf -> csrf.disable())
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/**").permitAll() // Public endpoints for login/register
-                        .requestMatchers("/employees").hasAnyRole("HR", "ADMIN") // Only HR/Admin can access all employees
-                        .requestMatchers("/employee/register").hasAnyAuthority("ADMIN", "HR")
-                        .requestMatchers("/employees/{id}").hasAnyRole("EMPLOYEE", "HR", "ADMIN") // Employees can access their own data
-                        .requestMatchers("/employees/{id}/upload-*").hasRole("EMPLOYEE") // Employees can upload their documents
-                        .requestMatchers("/employees/{id}/download-*").hasAnyRole("EMPLOYEE", "HR", "ADMIN")
-                        .anyRequest().authenticated() // All other requests require authentication
+                        .requestMatchers("/auth/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/employee/register").hasAnyAuthority("ADMIN", "HR")
+                        .requestMatchers("/employees/**").hasAnyRole("EMPLOYEE", "HR", "ADMIN")
+                        .requestMatchers("/api/auth/change-password").authenticated()
+                        .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();

@@ -6,8 +6,10 @@ import com.ust.employee_joining.repository.UserRepository;
 import com.ust.employee_joining.security.JwtUtil;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import java.util.Optional;
@@ -61,6 +63,25 @@ public class AuthService {
         authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, password));
         UserDetails userDetails = userDetailsService.loadUserByUsername(username);
         return jwtUtil.generateToken(userDetails.getUsername());
+    }
+
+    public String changePassword(String oldPassword, String newPassword) {
+        // Get the currently logged-in user
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+
+        // Check if the old password matches
+        if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
+            throw new RuntimeException("Old password is incorrect!");
+        }
+
+        // Set new password
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+
+        return "Password changed successfully!";
     }
 
 }
