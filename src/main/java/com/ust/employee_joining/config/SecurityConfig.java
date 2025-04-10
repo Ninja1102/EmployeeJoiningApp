@@ -7,6 +7,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -42,7 +43,12 @@ public class SecurityConfig {
         return new WebMvcConfigurer() {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
-                registry.addMapping("/**").allowedOrigins("*").allowedMethods("*");
+                registry.addMapping("/**")
+                        .allowedOrigins("http://localhost:3000") // Specific origin
+                        .allowedMethods("GET", "POST", "PUT", "DELETE")
+                        .allowedHeaders("*")
+                        .exposedHeaders("Authorization")
+                        .maxAge(3600);
             }
         };
     }
@@ -50,19 +56,16 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
-                .csrf(csrf -> csrf.disable())  // CSRF disabled for REST APIs
+                .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/**").permitAll()
-                        .requestMatchers("/login").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/employee/register").hasAnyAuthority("ADMIN", "HR")
-                        .requestMatchers("/employees/**").hasAnyAuthority("EMPLOYEE", "HR", "ADMIN") // Fixed Role Check
-                        .requestMatchers(HttpMethod.POST, "/employees/{id}/upload/{type}").hasAnyAuthority("EMPLOYEE", "HR", "ADMIN") // Ensure Upload Works
-                        .requestMatchers("/api/auth/change-password").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/employees/register").hasAnyAuthority("ROLE_ADMIN", "ROLE_HR")
+                        .requestMatchers(HttpMethod.DELETE, "/employees/**").hasAnyAuthority("ROLE_HR", "ROLE_ADMIN")
+                        .requestMatchers("/employees/**").hasAnyAuthority("ROLE_EMPLOYEE", "ROLE_HR", "ROLE_ADMIN")
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
-
 }

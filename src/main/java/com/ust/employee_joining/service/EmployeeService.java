@@ -5,22 +5,33 @@ import com.ust.employee_joining.model.Role;
 import com.ust.employee_joining.model.User;
 import com.ust.employee_joining.repository.EmployeeRepository;
 import com.ust.employee_joining.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 @Service
 public class EmployeeService {
+
+    @Value("${file.upload-dir}")
+    private String uploadDir;
+
+    @Value("${file.max-size}")
+    private String maxFileSize;
+
     private final EmployeeRepository employeeRepository;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
+
     public EmployeeService(EmployeeRepository employeeRepository,
                            UserRepository userRepository,  // ✅ Injected properly
                            PasswordEncoder passwordEncoder,
@@ -98,29 +109,38 @@ public class EmployeeService {
 
 
     public String uploadDocument(Long employeeId, MultipartFile file, String type) throws IOException {
+        // Validate file size
+        if (file.getSize() > 5 * 1024 * 1024) { // 5MB
+            throw new RuntimeException("File size exceeds 5MB limit");
+        }
+
+        // Create secure filename
+        String fileName = String.format("%s-%d-%s",
+                type,
+                employeeId,
+                UUID.randomUUID().toString().substring(0, 8)
+        );
+
+        Path uploadPath = Paths.get(uploadDir);
+        if (!Files.exists(uploadPath)) {
+            Files.createDirectories(uploadPath);
+        }
+
+        Path filePath = uploadPath.resolve(fileName);
+        Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+
+        // Update entity
         Employee employee = employeeRepository.findById(employeeId)
                 .orElseThrow(() -> new RuntimeException("Employee not found"));
 
-        // Create upload directory if it doesn't exist
-        File uploadDir = new File("uploads/");
-        if (!uploadDir.exists()) {
-            uploadDir.mkdirs();
-        }
-
-        // Generate unique filename
-        String filePath = "uploads/" + type + "-" + employeeId + "-" + System.currentTimeMillis() + "-" + file.getOriginalFilename();
-        File destFile = new File(filePath);
-        file.transferTo(destFile);
-
-        // Save file path in DB based on type
         switch (type.toLowerCase()) {
-            case "pan" -> employee.setPanImagePath(filePath);
-            case "aadhar" -> employee.setAadharImagePath(filePath);
-            case "passbook" -> employee.setBankPassbookImagePath(filePath);
+            case "pan" -> employee.setPanImagePath(filePath.toString());
+            case "aadhar" -> employee.setAadharImagePath(filePath.toString());
+            case "passbook" -> employee.setBankPassbookImagePath(filePath.toString());
             default -> throw new IllegalArgumentException("Invalid document type");
         }
 
         employeeRepository.save(employee);
-        return "File uploaded successfully: " + filePath;
+        return "File uploaded successfully";
     }
 }
